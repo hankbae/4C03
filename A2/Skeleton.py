@@ -98,7 +98,7 @@ class FileSynchronizer(threading.Thread):
         self.BUFFER_SIZE = 8192
 
         #Create a TCP socket to communicate with the tracker
-        self.client = #YOUR CODE
+        self.client = socket.socket(AF_INET,AF_STREAM) #i think...
         self.client.settimeout(180)
 
     
@@ -106,11 +106,11 @@ class FileSynchronizer(threading.Thread):
         #Initialize to the Init message that contains port number and file info.
         #Refer to Table 1 in Instructions.pdf for the format of the Init message
         #You can use json.dumps to conver a python dictionary to a json string
-        self.msg = #YOUR CODE
+        self.msg = json.dumps({"port": 8001,"files": [{"mtime":1548878750,"name":"fileA.txt"}]})
 
         #Create a TCP socket to serve file requests from peers.
-        self.server = #YOUR CODE
-
+        self.server = socket.socket(AF_INET,AF_STREAM) #i think
+        
         try:
             self.server.bind((self.host, self.port))
         except socket.error:
