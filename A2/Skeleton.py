@@ -12,6 +12,8 @@ import glob
 import json
 import optparse
 
+import re
+
 def validate_ip(s):
     """
     Validate the IP address of the correct format
@@ -54,7 +56,10 @@ def get_file_info():
     """
     file_arr = []
     #YOUR CODE
-
+    # not sure if it works
+    for f in os.listdir("."):
+        if not re.search("^\.", f) and not re.search("\.so$", f) and not re.search("\.py*", f) and not re.search("\.dll$", f):
+            file_arr.append({'name': f, 'mtime': os.path.getmtime(f)})
     return file_arr
 
 def check_port_available(check_port):
