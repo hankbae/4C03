@@ -80,7 +80,10 @@ def get_next_available_port(initial_port):
     port found to be available; False if no port is available.
     """
 
-    #YOUR CODE
+    for port in range(initial_port,2^16):
+        if check_port_available(port):
+            return port
+    return False
 
 
 class FileSynchronizer(threading.Thread):
@@ -110,7 +113,7 @@ class FileSynchronizer(threading.Thread):
 
         #Create a TCP socket to serve file requests from peers.
         self.server = socket.socket(AF_INET,AF_STREAM) #i think
-        
+
         try:
             self.server.bind((self.host, self.port))
         except socket.error:
