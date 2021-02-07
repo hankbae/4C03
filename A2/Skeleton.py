@@ -55,7 +55,6 @@ def get_file_info():
           b. use os.path.getmtime to get mtime, and round down to integer
     """
     file_arr = []
-    #YOUR CODE
     # not sure if it works
     for f in os.listdir("."):
         if not re.search("^\.", f) and not re.search("\.so$", f) and not re.search("\.py*", f) and not re.search("\.dll$", f):
