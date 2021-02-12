@@ -55,10 +55,10 @@ def get_file_info():
           b. use os.path.getmtime to get mtime, and round down to integer
     """
     file_arr = []
-    # not sure if it works
     for f in os.listdir("."):
-        if not re.search("^\.", f) and not re.search("\.so$", f) and not re.search("\.py*", f) and not re.search("\.dll$", f):
-            file_arr.append({'name': f, 'mtime': os.path.getmtime(f)})
+        if os.path.isfile(f):
+            if not f.endswith(".so") and not f.endswith(".py") and not f.endswith(".dll"):
+                file_arr.append({'name': f, 'mtime': os.path.getmtime(f)})
     return file_arr
 
 def check_port_available(check_port):
@@ -98,6 +98,7 @@ class FileSynchronizer(threading.Thread):
         self.port = port
         self.host = host
 
+
         #Tracker IP/hostname and port
         self.trackerhost = trackerhost
         self.trackerport = trackerport
@@ -105,7 +106,7 @@ class FileSynchronizer(threading.Thread):
         self.BUFFER_SIZE = 8192
 
         #Create a TCP socket to communicate with the tracker
-        self.client = socket.socket(AF_INET,AF_STREAM) #i think...
+        self.client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.client.settimeout(180)
 
     
@@ -113,10 +114,10 @@ class FileSynchronizer(threading.Thread):
         #Initialize to the Init message that contains port number and file info.
         #Refer to Table 1 in Instructions.pdf for the format of the Init message
         #You can use json.dumps to conver a python dictionary to a json string
-        self.msg = json.dumps({"port": 8001,"files": [{"mtime":1548878750,"name":"fileA.txt"}]})
+        self.msg = json.dumps({"port": self.port,"files": get_file_info()})
 
         #Create a TCP socket to serve file requests from peers.
-        self.server = socket.socket(AF_INET,AF_STREAM) #i think
+        self.server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 
         try:
             self.server.bind((self.host, self.port))
@@ -130,7 +131,14 @@ class FileSynchronizer(threading.Thread):
         self.server.close()
 
     #Handle file request from a peer(i.e., send the file content to peers)
-    def process_message(self, conn,addr):
+    def process_message(self, conn, addr):
+        
+        filename = conn.recv(1024)
+        f = open(filename,"rb")
+        conn.sendall(f.read())
+        f.close()
+        conn.close()
+
         '''
         Arguments:
         self -- self object
@@ -161,6 +169,14 @@ class FileSynchronizer(threading.Thread):
         #      then later self.msg contains the Keep-alive message
         #YOUR CODE
 
+        with self.client as s:
+            s.bind((self.trackerhost,self.trackerport))
+            s.listen()
+            conn, addr = s.accept()
+            with conn:
+                 conn.sendall(self.msg)
+
+                 
         #Step 2. now receive a directory response message from tracker
         directory_response_message = ''
         #YOUR CODE
