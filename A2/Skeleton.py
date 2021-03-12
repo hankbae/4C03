@@ -58,7 +58,7 @@ def get_file_info():
     for f in os.listdir("."):
         if os.path.isfile(f):
             if not f.endswith(".so") and not f.endswith(".py") and not f.endswith(".dll"):
-                file_arr.append({'name': f, 'mtime': os.path.getmtime(f)})
+                file_arr.append({'name': f, 'mtime': int(os.path.getmtime(f))})
     return file_arr
 
 def check_port_available(check_port):
@@ -177,10 +177,9 @@ class FileSynchronizer(threading.Thread):
                  conn.sendall(self.msg)
 
                  
-        #Step 2. now receive a directory response message from tracker
-        directory_response_message = ''
-        #YOUR CODE
-        print('received from tracker:',directory_response_message)
+                #Step 2. now receive a directory response message from tracker
+                directory_response_message = conn.recv(4096).decode()
+                print('received from tracker:',directory_response_message)
 
         #Step 3. parse the directory response message. If it contains new or
         #more up-to-date files, request the files from the respective peers.
@@ -196,10 +195,24 @@ class FileSynchronizer(threading.Thread):
         #         to set the mtime
         #YOUR CODE
 
+                dir_response_json = json.loads(directory_response_message)
+
+                for filename in dir_response_json:
+                    if (dir_response_json[filename]["mtime"] > os.path.getmtime(filename)) or (filename not in os.listdir(".")):
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                            s.bind(dir_response_json[filename]["ip"],dir_response_json[filename]["port"])
+                            s.connect((dir_response_json[filename]["ip"],dir_response_json[filename]["port"]))
+                            s.sendall(filename)
+
+
+
+
+
+
         #Step 4. construct and send the KeepAlive message
         #Note KeepAlive msg is sent multiple times, the format can be found in Table 1
         #use json.dumps to convert python dict to json string.
-        self.msg = #YOUR CODE
+        self.msg = json.dumps({"port":self.port})
 
         #Step 5. start timer
         t = threading.Timer(5, self.sync)
@@ -223,4 +236,4 @@ if __name__ == '__main__':
     #get free port
     synchronizer_port = get_next_available_port(8000)
     synchronizer_thread = FileSynchronizer(tracker_ip,tracker_port,synchronizer_port)
-    synchronizer_thread.start()
+    synchronizer_thread.run()
